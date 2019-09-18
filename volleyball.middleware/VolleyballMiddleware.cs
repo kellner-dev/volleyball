@@ -42,7 +42,7 @@ namespace volleyball.middleware
         {
             //TODO: Consider a kill switch for logging here
 
-            //TODO: Switch on type, for now use AnyMessage
+            //TODO: Use a Factory here
             var message = new AnyVolleyballMessage(){
                 RequestMethod = httpContext.Request.Method,
                 RequestPath = GetPath(httpContext),
@@ -50,6 +50,7 @@ namespace volleyball.middleware
                 Elapsed = elapsedMs
             };
 
+            //TODO: Use a factory here
             IVolleyballQueue queue = new RabbitMQVolleyBallQueue();
             queue.Publish(message);
 
