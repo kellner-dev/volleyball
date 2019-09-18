@@ -1,9 +1,10 @@
 ﻿using System;
-using System.IO;
-using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Internal;
+using Microsoft.AspNetCore.Http.Features;
+using volleyball.middleware.message;
+using volleyball.middleware.queue;
 
 namespace volleyball.middleware
 {
@@ -16,68 +17,53 @@ namespace volleyball.middleware
             _next = next;
         }
 
-        public async Task Invoke(HttpContext context)
+        public async Task Invoke(HttpContext httpContext)
         {
-            //First, get the incoming request
-            var request = await FormatRequest(context.Request);
+            if (httpContext == null) throw new ArgumentNullException(nameof(httpContext));
 
-            //Copy a pointer to the original response body stream
-            var originalBodyStream = context.Response.Body;
+            var start = Stopwatch.GetTimestamp();
 
-            //Create a new memory stream...
-            using (var responseBody = new MemoryStream())
+            try
             {
-                //...and use that for the temporary response body
-                context.Response.Body = responseBody;
+                await _next(httpContext);
+                var elapsedMs = GetElapsedMilliseconds(start, Stopwatch.GetTimestamp());
+                var statusCode = httpContext.Response.StatusCode;
+                LogVolley(httpContext, statusCode, elapsedMs);
+            }
+            catch (Exception)
+                // Still get the developer page
+                when (LogVolley(httpContext, 500, GetElapsedMilliseconds(start, Stopwatch.GetTimestamp())))
+            {
 
-                //Continue down the Middleware pipeline, eventually returning to this class
-                await _next(context);
-
-                //Format the response from the server
-                var response = await FormatResponse(context.Response);
-
-                //TODO: Save log to chosen datastore
-
-                //Copy the contents of the new memory stream (which contains the response) to the original stream, which is then returned to the client.
-                await responseBody.CopyToAsync(originalBodyStream);
             }
         }
 
-        private async Task<string> FormatRequest(HttpRequest request)
+        bool LogVolley(HttpContext httpContext, int statusCode, double elapsedMs)
         {
-            var body = request.Body;
+            //TODO: Consider a kill switch for logging here
 
-            //This line allows us to set the reader for the request back at the beginning of its stream.
-            request.EnableRewind();
+            //TODO: Switch on type, for now use AnyMessage
+            var message = new AnyVolleyballMessage(){
+                RequestMethod = httpContext.Request.Method,
+                RequestPath = GetPath(httpContext),
+                StatusCode = statusCode,
+                Elapsed = elapsedMs
+            };
 
-            //We now need to read the request stream.  First, we create a new byte[] with the same length as the request stream...
-            var buffer = new byte[Convert.ToInt32(request.ContentLength)];
+            IVolleyballQueue queue = new RabbitMQVolleyBallQueue();
+            queue.Publish(message);
 
-            //...Then we copy the entire request stream into the new buffer.
-            await request.Body.ReadAsync(buffer, 0, buffer.Length);
-
-            //We convert the byte[] into a string using UTF8 encoding...
-            var bodyAsText = Encoding.UTF8.GetString(buffer);
-
-            //..and finally, assign the read body back to the request body, which is allowed because of EnableRewind()
-            request.Body = body;
-
-            return $"{request.Scheme} {request.Host}{request.Path} {request.QueryString} {bodyAsText}";
+            return false;
         }
 
-        private async Task<string> FormatResponse(HttpResponse response)
+        static double GetElapsedMilliseconds(long start, long stop)
         {
-            //We need to read the response stream from the beginning...
-            response.Body.Seek(0, SeekOrigin.Begin);
-
-            //...and copy it into a string
-            string text = await new StreamReader(response.Body).ReadToEndAsync();
-
-            //We need to reset the reader for the response so that the client can read it.
-            response.Body.Seek(0, SeekOrigin.Begin);
-
-            //Return the string for the response, including the status code (e.g. 200, 404, 401, etc.)
-            return $"{response.StatusCode}: {text}";
+            return (stop - start) * 1000 / (double)Stopwatch.Frequency;
+        }
+        
+        static string GetPath(HttpContext httpContext)
+        {
+            return httpContext.Features.Get<IHttpRequestFeature>()?.RawTarget ?? httpContext.Request.Path.ToString();
         }
     }
 }

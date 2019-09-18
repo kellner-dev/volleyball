@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/volleyball.web/bin/Debug/netcoreapp2.1/volleyball.web.dll",
+            "program": "${workspaceFolder}/volleyball.web/bin/Debug/netcoreapp2.2/volleyball.web.dll",
             "args": [],
             "cwd": "${workspaceFolder}/volleyball.web",
             "stopAtEntry": false,
