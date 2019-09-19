@@ -7,6 +7,6 @@ namespace volleyball.common.queue
     public interface IVolleyballQueue
     {
         Task Publish(BaseVolleyballMessage message);
-        void Consume(string queue);
+        Task Consume(string queue);
     }
 }

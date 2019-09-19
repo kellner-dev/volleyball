@@ -25,6 +25,26 @@
             }
         },
         {
+            "name": ".NET Core Launch (consumer)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/volleyball.consumer.elastic/bin/Debug/netcoreapp2.2/volleyball.consumer.elastic.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/volleyball.consumer.elastic",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "^\\s*Now listening on:\\s+(https?://\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Views"
+            }
+        },
+        {
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach",

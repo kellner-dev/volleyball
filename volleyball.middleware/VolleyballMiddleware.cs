@@ -44,7 +44,7 @@ namespace volleyball.middleware
             //TODO: Consider a kill switch for logging here
 
             var message = VolleyballMessageFactory.Create(httpContext.Response.ContentType, httpContext.Request.Method,
-                GetPath(httpContext), statusCode, elapsedMs, JsonConvert.SerializeObject(httpContext));
+                GetPath(httpContext), statusCode, elapsedMs);
 
             //TODO: Use a factory here
             IVolleyballQueue queue = new RabbitMQVolleyBallQueue();

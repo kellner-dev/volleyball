@@ -8,7 +8,7 @@ namespace volleyball.common.message
                                                    string requestPath,
                                                    int statusCode,
                                                    double elapsed,
-                                                   string httpContext)
+                                                   string httpContext = null)
         {
             if(extension.Contains(";"))
                 extension = extension.Split(';')[0];
