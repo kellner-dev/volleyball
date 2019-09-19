@@ -1,11 +1,12 @@
+using System;
 using System.Threading.Tasks;
-using volleyball.middleware.message;
+using volleyball.common.message;
 
-namespace volleyball.middleware.queue
+namespace volleyball.common.queue
 {
     public interface IVolleyballQueue
     {
         Task Publish(BaseVolleyballMessage message);
-
+        void Consume(string queue);
     }
 }

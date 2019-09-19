@@ -3,8 +3,9 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using volleyball.middleware.message;
-using volleyball.middleware.queue;
+using Newtonsoft.Json;
+using volleyball.common.message;
+using volleyball.common.queue;
 
 namespace volleyball.middleware
 {
@@ -42,13 +43,8 @@ namespace volleyball.middleware
         {
             //TODO: Consider a kill switch for logging here
 
-            //TODO: Use a Factory here
-            var message = new AnyVolleyballMessage(){
-                RequestMethod = httpContext.Request.Method,
-                RequestPath = GetPath(httpContext),
-                StatusCode = statusCode,
-                Elapsed = elapsedMs
-            };
+            var message = VolleyballMessageFactory.Create(httpContext.Response.ContentType, httpContext.Request.Method,
+                GetPath(httpContext), statusCode, elapsedMs, JsonConvert.SerializeObject(httpContext));
 
             //TODO: Use a factory here
             IVolleyballQueue queue = new RabbitMQVolleyBallQueue();

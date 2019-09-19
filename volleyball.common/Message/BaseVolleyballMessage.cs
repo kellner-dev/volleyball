@@ -1,6 +1,6 @@
 using System;
 
-namespace volleyball.middleware.message
+namespace volleyball.common.message
 {
     public abstract class BaseVolleyballMessage
     {
